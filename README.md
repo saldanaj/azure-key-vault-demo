@@ -8,6 +8,17 @@ What’s included
 - Rotator Function: Timer + HTTP endpoint that creates a new secret version; HTTP can optionally rotate the key.
 - Scripts: Deploy, configure, seed, rotate, show versions, and destroy.
 
+Architecture
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="Architecture diagram: CLI and Rotator interacting with Key Vault via managed identity" width="820" />
+</p>
+
+How it works
+- The CLI always requests by name (no version), so new versions are picked up automatically.
+- The rotator creates a new secret version on a schedule; the HTTP endpoint can also rotate the key.
+- Managed identity authenticates the rotator; local dev uses `az login` with `DefaultAzureCredential`.
+
 Quick start
 1) Open in a dev container (recommended):
    - With VS Code + Dev Containers extension or GitHub Codespaces.

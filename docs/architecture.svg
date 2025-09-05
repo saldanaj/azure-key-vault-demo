@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420" viewBox="0 0 980 420">
+  <defs>
+    <style>
+      .box { fill:#f7fafc; stroke:#2d3748; stroke-width:1.5; rx:8; ry:8; }
+      .title { font: 600 16px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; fill:#1a202c; }
+      .text { font: 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; fill:#2d3748; }
+      .arrow { stroke:#2d3748; stroke-width:1.8; fill:none; marker-end:url(#arrowhead); }
+      .dashed { stroke-dasharray:6 6; }
+      .note { font: 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; fill:#4a5568; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d3748" />
+    </marker>
+  </defs>
+
+  <!-- Boxes -->
+  <rect class="box" x="410" y="40" width="220" height="110"/>
+  <text class="title" x="520" y="70" text-anchor="middle">Key Vault</text>
+  <text class="text" x="520" y="95" text-anchor="middle">Secrets + Keys</text>
+
+  <rect class="box" x="60" y="250" width="240" height="110"/>
+  <text class="title" x="180" y="280" text-anchor="middle">Python CLI</text>
+  <text class="text" x="180" y="305" text-anchor="middle">reads secret, signs with key</text>
+
+  <rect class="box" x="680" y="230" width="260" height="130"/>
+  <text class="title" x="810" y="260" text-anchor="middle">Function App Rotator</text>
+  <text class="text" x="810" y="285" text-anchor="middle">Timer + HTTP</text>
+  <text class="text" x="810" y="305" text-anchor="middle">creates new secret version</text>
+  <text class="text" x="810" y="325" text-anchor="middle">optional key rotation (HTTP)</text>
+
+  <rect class="box" x="710" y="370" width="200" height="40"/>
+  <text class="text" x="810" y="395" text-anchor="middle">User-assigned Managed Identity</text>
+
+  <!-- Arrows -->
+  <!-- CLI -> KV (read/sign) -->
+  <path class="arrow" d="M 300 305 C 360 300, 380 260, 420 200 C 445 160, 460 140, 470 130"/>
+  <text class="note" x="370" y="250">DefaultAzureCredential</text>
+
+  <!-- Rotator -> KV (rotate) -->
+  <path class="arrow dashed" d="M 810 230 C 760 200, 700 160, 630 130"/>
+  <text class="note" x="720" y="185">rotate secret (timer/HTTP)</text>
+
+  <!-- Rotator -> KV (access) solid for key ops -->
+  <path class="arrow" d="M 810 230 C 720 210, 640 170, 560 140"/>
+  <text class="note" x="720" y="210">key sign/ops via KV</text>
+
+  <!-- MI attached to Function App -->
+  <path class="arrow dashed" d="M 810 370 L 810 360"/>
+  <text class="note" x="830" y="360">managed identity</text>
+
+  <!-- Caption -->
+  <text class="note" x="490" y="400" text-anchor="middle">
+    Apps request by name (no version) so new versions are picked up automatically.
+  </text>
+</svg>
+
