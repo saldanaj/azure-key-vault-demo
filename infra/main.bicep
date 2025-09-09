@@ -31,9 +31,8 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
       family: 'A'
     }
     enableRbacAuthorization: false
-    enablePurgeProtection: false
     softDeleteRetentionInDays: 7
-    accessPolicies: [
+    accessPolicies: concat([
       {
         tenantId: subscription().tenantId
         objectId: deployerObjectId
@@ -53,7 +52,8 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
           storage: []
         }
       }
-      if (createUserAssignedIdentity) {
+    ], createUserAssignedIdentity ? [
+      {
         tenantId: subscription().tenantId
         objectId: uami.properties.principalId
         permissions: {
@@ -63,7 +63,7 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
           storage: []
         }
       }
-    ]
+    ] : [])
     enabledForDeployment: false
     enabledForDiskEncryption: false
     enabledForTemplateDeployment: false

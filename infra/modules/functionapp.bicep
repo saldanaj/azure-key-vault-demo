@@ -87,9 +87,9 @@ resource app 'Microsoft.Web/sites@2023-01-01' = {
     serverFarmId: plan.id
     siteConfig: {
       linuxFxVersion: format('PYTHON|{0}', pythonVersion)
-      minimumTlsVersion: '1.2'
+      minTlsVersion: '1.2'
       http20Enabled: true
-      appSettings: [
+      appSettings: concat([
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
           value: '~4'
@@ -110,10 +110,6 @@ resource app 'Microsoft.Web/sites@2023-01-01' = {
           name: 'AZURE_CLIENT_ID'
           value: userAssignedIdentityClientId
         }
-        if (!empty(keyVaultUri)) {
-          name: 'KV_URI'
-          value: keyVaultUri
-        }
         {
           name: 'SECRET_NAME'
           value: secretName
@@ -130,7 +126,12 @@ resource app 'Microsoft.Web/sites@2023-01-01' = {
           name: 'ROTATE_KEY'
           value: string(rotateKey)
         }
-      ]
+      ], !empty(keyVaultUri) ? [
+        {
+          name: 'KV_URI'
+          value: keyVaultUri
+        }
+      ] : [])
     }
   }
 }
