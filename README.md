@@ -9,6 +9,30 @@ A comprehensive demonstration of Azure Key Vault secret and key rotation with re
 - **Manual Rotation Control**: Rotate secrets and keys on-demand through the dashboard or CLI
 - **Best Practices**: Demonstrates proper Azure identity authentication and Key Vault integration patterns
 
+## 🏗️ Architecture Overview
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="Azure Key Vault Rotation Demo Architecture" width="800" />
+</p>
+
+### How It Works
+
+1. **🔐 Azure Key Vault**: Centrally stores secrets and cryptographic keys with versioning
+2. **🖥️ Local Dashboard**: Flask web application provides real-time monitoring and rotation controls
+3. **⚡ CLI Tool**: Command-line interface for direct Key Vault operations and automation
+4. **🔑 Azure Identity**: Uses `DefaultAzureCredential` for seamless authentication (Azure CLI for local dev)
+5. **🔄 Rotation Flow**: 
+   - Applications always request by name (no version specified)
+   - New rotations create new versions automatically
+   - Applications pick up latest versions without code changes
+
+### Key Benefits
+
+- **🚀 Zero Downtime**: Applications automatically use new versions without restarts
+- **👀 Full Visibility**: Real-time dashboard shows all rotation activity and status
+- **🛡️ Security**: Centralized secret management with audit trails
+- **🔧 Flexibility**: Multiple interfaces (web, CLI, programmatic) for different use cases
+
 ## 📁 Repository Structure
 
 ```
