@@ -24,6 +24,9 @@ SETTINGS=(
 if [[ -n "${KV_URI:-}" ]]; then
   SETTINGS+=("KV_URI=${KV_URI}")
 fi
+if [[ -n "${KV_NAME:-}" ]]; then
+  SETTINGS+=("KV_NAME=${KV_NAME}")
+fi
 
 az functionapp config appsettings set -g "$RG" -n "$APP_NAME" --settings "${SETTINGS[@]}" -o table
 echo "[✓] App settings configured."

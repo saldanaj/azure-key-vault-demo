@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Key Vault Rotation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            padding: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .status-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .status-label {
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .status-value {
+            color: #27ae60;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .timeline {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        
+        .timeline h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        
+        .timeline-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .timeline-icon.secret {
+            background: #3498db;
+        }
+        
+        .timeline-icon.key {
+            background: #e74c3c;
+        }
+        
+        .timeline-icon.both {
+            background: #f39c12;
+        }
+        
+        .timeline-content {
+            flex: 1;
+        }
+        
+        .timeline-time {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-left: auto;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            background: #ffe6e6;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .success {
+            background: #e8f5e8;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #3498db;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        @media (max-width: 768px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Key Vault Rotation Dashboard</h1>
+            <p>Monitoring: <strong>{{ config.vault_name or 'Key Vault' }}</strong></p>
+        </div>
+        
+        <div class="dashboard">
+            <div id="messages"></div>
+            
+            <div class="auto-refresh">
+                <span>Auto-refresh:</span>
+                <label class="toggle">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    <span class="slider"></span>
+                </label>
+                <span id="refreshStatus">ON (5s)</span>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="rotateSecret()">🔄 Rotate Secret</button>
+                <button class="btn btn-secondary" onclick="rotateKey()">🔑 Rotate Key</button>
+                <button class="btn btn-danger" onclick="rotateBoth()">⚡ Rotate Both</button>
+                <button class="btn btn-primary" onclick="refreshStatus()">🔃 Refresh Now</button>
+            </div>
+            
+            <div class="status-grid">
+                <div class="status-card">
+                    <h3>🔐 Secret Status</h3>
+                    <div id="secretStatus">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>🔑 Key Status</h3>
+                    <div id="keyStatus">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline">
+                <h3>📋 Rotation Timeline</h3>
+                <div id="timelineContent">
+                    <div class="loading">Loading timeline...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            secretName: '{{ config.secret_name }}',
+            keyName: '{{ config.key_name }}',
+            kvName: '{{ config.vault_name }}'
+        };
+        
+        let autoRefreshInterval;
+        let isLoading = false;
+        
+        function showMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error' : 'success';
+            messageDiv.textContent = message;
+            messagesDiv.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+        
+        function disableButtons(disabled) {
+            const buttons = document.querySelectorAll('.controls .btn');
+            buttons.forEach(btn => btn.disabled = disabled);
+        }
+        
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Request failed:', error);
+                throw error;
+            }
+        }
+        
+        async function refreshStatus() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            try {
+                const data = await makeRequest('/api/status');
+                updateSecretStatus(data.secret);
+                updateKeyStatus(data.key);
+                updateTimeline(data.timeline);
+            } catch (error) {
+                showMessage(`Failed to refresh status: ${error.message}`, 'error');
+            } finally {
+                isLoading = false;
+            }
+        }
+        
+        function updateSecretStatus(secret) {
+            const container = document.getElementById('secretStatus');
+            if (!secret || secret.error) {
+                container.innerHTML = `<div class="error">${secret ? secret.error : 'No secret data available'}</div>`;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="status-item">
+                    <span class="status-label">Name:</span>
+                    <span class="status-value">${secret.name || 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Current Version:</span>
+                    <span class="status-value">${secret.current_version || 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Created:</span>
+                    <span class="status-value">${secret.created ? new Date(secret.created).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Updated:</span>
+                    <span class="status-value">${secret.updated ? new Date(secret.updated).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Enabled:</span>
+                    <span class="status-value">${secret.enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Total Versions:</span>
+                    <span class="status-value">${secret.total_versions || 0}</span>
+                </div>
+            `;
+        }
+        
+        function updateKeyStatus(key) {
+            const container = document.getElementById('keyStatus');
+            if (!key || key.error) {
+                container.innerHTML = `<div class="error">${key ? key.error : 'No key data available'}</div>`;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="status-item">
+                    <span class="status-label">Name:</span>
+                    <span class="status-value">${key.name || 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Current Version:</span>
+                    <span class="status-value">${key.current_version || 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Key Type:</span>
+                    <span class="status-value">${key.key_type || 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Created:</span>
+                    <span class="status-value">${key.created ? new Date(key.created).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Updated:</span>
+                    <span class="status-value">${key.updated ? new Date(key.updated).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Enabled:</span>
+                    <span class="status-value">${key.enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Total Versions:</span>
+                    <span class="status-value">${key.total_versions || 0}</span>
+                </div>
+            `;
+        }
+        
+        function updateTimeline(timeline) {
+            const container = document.getElementById('timelineContent');
+            if (!timeline || timeline.length === 0) {
+                container.innerHTML = '<div class="loading">No rotation history available</div>';
+                return;
+            }
+            
+            container.innerHTML = timeline.map(item => `
+                <div class="timeline-item">
+                    <div class="timeline-icon ${item.type}"></div>
+                    <div class="timeline-content">
+                        <strong>${item.type.toUpperCase()} ${item.name}</strong> rotated by ${item.rotated_by}
+                        <br><small>Version: ${item.version}</small>
+                    </div>
+                    <div class="timeline-time">${new Date(item.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+        
+        async function rotateSecret() {
+            disableButtons(true);
+            try {
+                showMessage('Rotating secret...', 'info');
+                const result = await makeRequest('/api/rotate/secret', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                showMessage(`Secret rotated successfully! New version: ${result.new_version}`, 'success');
+                setTimeout(refreshStatus, 1000);
+            } catch (error) {
+                showMessage(`Failed to rotate secret: ${error.message}`, 'error');
+            } finally {
+                disableButtons(false);
+            }
+        }
+        
+        async function rotateKey() {
+            disableButtons(true);
+            try {
+                showMessage('Rotating key...', 'info');
+                const result = await makeRequest('/api/rotate/key', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                showMessage(`Key rotated successfully! New version: ${result.new_version}`, 'success');
+                setTimeout(refreshStatus, 1000);
+            } catch (error) {
+                showMessage(`Failed to rotate key: ${error.message}`, 'error');
+            } finally {
+                disableButtons(false);
+            }
+        }
+        
+        async function rotateBoth() {
+            disableButtons(true);
+            try {
+                showMessage('Rotating secret and key...', 'info');
+                const secretResult = await makeRequest('/api/rotate/secret', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                const keyResult = await makeRequest('/api/rotate/key', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                showMessage(`Both rotated! Secret: ${secretResult.new_version}, Key: ${keyResult.new_version}`, 'success');
+                setTimeout(refreshStatus, 1000);
+            } catch (error) {
+                showMessage(`Failed to rotate: ${error.message}`, 'error');
+            } finally {
+                disableButtons(false);
+            }
+        }
+        
+        function setupAutoRefresh() {
+            const toggle = document.getElementById('autoRefresh');
+            const status = document.getElementById('refreshStatus');
+            
+            function updateAutoRefresh() {
+                if (toggle.checked) {
+                    autoRefreshInterval = setInterval(refreshStatus, 5000);
+                    status.textContent = 'ON (5s)';
+                } else {
+                    clearInterval(autoRefreshInterval);
+                    status.textContent = 'OFF';
+                }
+            }
+            
+            toggle.addEventListener('change', updateAutoRefresh);
+            updateAutoRefresh();
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAutoRefresh();
+            refreshStatus();
+        });
+    </script>
+</body>
+</html>

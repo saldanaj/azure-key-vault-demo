@@ -19,8 +19,8 @@ if [[ ! -d .venv ]]; then
 fi
 source .venv/bin/activate
 python -m pip install --upgrade pip >/dev/null
-pip install -r app/python/requirements.txt >/dev/null || echo "[warn] Failed to install app/python requirements"
-pip install -r rotator/function/requirements.txt >/dev/null || echo "[warn] Failed to install rotator/function requirements"
+echo "[devcontainer] Installing consolidated requirements from root..."
+pip install -r requirements.txt >/dev/null || echo "[warn] Failed to install requirements"
 deactivate || true
 
 echo "[devcontainer] Node and npm installed via devcontainer feature."

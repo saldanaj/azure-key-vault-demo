@@ -1,0 +1,11 @@
+# Dashboard-specific requirements  
+# For a complete list of all dependencies, see ../requirements.txt
+
+# Core Azure Key Vault dependencies
+azure-identity>=1.24.0
+azure-keyvault-secrets>=4.10.0
+azure-keyvault-keys>=4.11.0
+
+# Web framework dependencies
+flask>=3.0.3
+python-dotenv>=1.0.1

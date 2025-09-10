@@ -1,4 +1,14 @@
-Azure Key Vault Rotation Demo
+# Azure Key Vault Rotation Demo
+
+Minimal, disposable demo showing how apps consume Key Vault secrets/keys by name (no version) and naturally pick up rotations.
+
+## What's included
+
+- **Infrastructure (Bicep)**: Key Vault (Standard), user-assigned managed identity, Linux Consumption Function App
+- **Python CLI**: Reads secret metadata/value and signs data using a Key Vault key
+- **Local Dashboard**: Web interface for monitoring and controlling rotations
+- **Key Vault Module**: Reusable Python module for Key Vault operations
+- **Scripts**: Deploy, configure, seed, rotate, show versions, and destroy Vault Rotation Demo
 
 Minimal, disposable demo showing how apps consume Key Vault secrets/keys by name (no version) and naturally pick up rotations.
 
@@ -33,12 +43,16 @@ Quick start
      - `cd app/python && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
    - `python -m kv_cli read-secret --vault "$KV_NAME" --show-value`
    - `python -m kv_cli sign --vault "$KV_NAME" --data "hello"`
-5) Rotate:
+5) View Dashboard:
+   - Open web dashboard: `HOST=<functionAppHostname> scripts/open-dashboard.sh`
+   - Or visit: `https://<functionAppHostname>/` in your browser
+6) Rotate:
    - Secret: `KV_NAME=$KV_NAME scripts/rotate-secret-now.sh`
    - Key: `KV_NAME=$KV_NAME scripts/rotate-key-now.sh`
    - HTTP (secret): `HOST=<functionAppHostname> scripts/rotator-http-rotate.sh`
    - HTTP (secret+key): `HOST=<functionAppHostname> scripts/rotator-http-rotate-both.sh`
-6) Destroy: `RG=akv-rot-demo scripts/destroy.sh`
+   - Or use the dashboard buttons for interactive rotation
+7) Destroy: `RG=akv-rot-demo scripts/destroy.sh`
 
 Docs
 - See `docs/00-overview.md`, `docs/10-deploy.md`, `docs/20-run-demo.md`, `docs/40-rotator.md`, and `docs/30-cleanup.md`.

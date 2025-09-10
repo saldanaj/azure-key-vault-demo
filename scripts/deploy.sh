@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Config
 : "${RG:=akv-rot-demo}"
-: "${LOCATION:=eastus}"
+: "${LOCATION:=westus2}"
 : "${PREFIX:=akvdemo}"
 : "${CREATE_UAMI:=true}"
 

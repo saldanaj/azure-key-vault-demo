@@ -1,36 +1,47 @@
-import os
+"""Key and secret rotation functions."""
+
 import random
 import string
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional, Dict, Any
 
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.keyvault.keys import KeyClient
 
-
-def _vault_url_from_env() -> str:
-    kv_uri = os.getenv("KV_URI")
-    kv_name = os.getenv("KV_NAME")
-    if kv_uri:
-        return kv_uri.rstrip('/')
-    if kv_name:
-        return f"https://{kv_name}.vault.azure.net"
-    raise RuntimeError("KV_URI or KV_NAME must be set in app settings.")
-
-
-def _credential():
-    return DefaultAzureCredential(exclude_shared_token_cache_credential=True)
+from .config import vault_url_from_env
 
 
 def _generate_value(n: int = 24) -> str:
+    """Generate a random value for secret rotation."""
     alphabet = string.ascii_letters + string.digits
     return "rot-" + "".join(random.choice(alphabet) for _ in range(n))
 
 
-def rotate_secret(rotated_by: str = "timer", provided_value: Optional[str] = None, disable_previous: bool = False) -> dict:
-    secret_name = os.getenv("SECRET_NAME", "demo-secret")
-    kv_url = _vault_url_from_env()
+def _credential():
+    """Get Azure credentials."""
+    return DefaultAzureCredential(exclude_shared_token_cache_credential=True)
+
+
+def rotate_secret(
+    secret_name: str,
+    rotated_by: str = "manual",
+    provided_value: Optional[str] = None,
+    disable_previous: bool = False
+) -> Dict[str, Any]:
+    """
+    Rotate a Key Vault secret.
+    
+    Args:
+        secret_name: Name of the secret to rotate
+        rotated_by: Who/what initiated the rotation
+        provided_value: Specific value to use (if None, generates random value)
+        disable_previous: Whether to disable the previous version
+    
+    Returns:
+        Dictionary with rotation results
+    """
+    kv_url = vault_url_from_env()
     cred = _credential()
     client = SecretClient(vault_url=kv_url, credential=cred)
 
@@ -62,17 +73,32 @@ def rotate_secret(rotated_by: str = "timer", provided_value: Optional[str] = Non
         "previous_version": previous_version,
         "disabled_previous": disabled_previous,
         "kv_url": kv_url,
+        "rotated_by": rotated_by,
+        "rotation_time": tags["rotationTime"]
     }
 
 
-def rotate_key_version(rotated_by: str = "http") -> dict:
-    key_name = os.getenv("KEY_NAME", "demo-key")
-    kv_url = _vault_url_from_env()
+def rotate_key_version(key_name: str, rotated_by: str = "manual") -> Dict[str, Any]:
+    """
+    Rotate a Key Vault key.
+    
+    Args:
+        key_name: Name of the key to rotate
+        rotated_by: Who/what initiated the rotation
+    
+    Returns:
+        Dictionary with rotation results
+    """
+    kv_url = vault_url_from_env()
     cred = _credential()
     client = KeyClient(vault_url=kv_url, credential=cred)
     new_key = client.rotate_key(key_name)
+    
     return {
         "key_name": key_name,
         "key_kid": new_key.id,
+        "new_version": new_key.properties.version,
         "kv_url": kv_url,
+        "rotated_by": rotated_by,
+        "rotation_time": datetime.now(timezone.utc).isoformat()
     }
